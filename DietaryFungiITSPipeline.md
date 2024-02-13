@@ -1,13 +1,13 @@
 ### Setup of working directory - change this path to match your file system
 ```
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
+WD_path=/anvil/scratch/x-jnash12/DietaryFungi
 mkdir ${WD_path}
 cd ${WD_path}
 ```
 
 ### Generates filelist to loop through, omitting Mengyi's samples which were also on this run
 ```
-ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep -v "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
+ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
 ```
 
 ### Uses PEAR to merge paired reads
@@ -148,3 +148,6 @@ qiime feature-table tabulate-seqs \
 	--i-data ${WD_path}/ITS2_Dada2_repseqs97.qza \
 	--o-visualization ${WD_path}/ITS2_Dada2_repseqs97.qzv
 ```
+https://github.com/colinbrislawn/unite-train/releases/download/v9.0-v25.07.2023-qiime2-2023.9/unite_ver9_dynamic_all_25.07.2023-Q2-2023.9.qza'
+
+### Taxonomic Classification - Below uses a pre-trained taxonomic classifier for the UNITE database of full length ITS sequences. I am working on training my own classifier for the UNITE database that has been trimmed to only include the ITS2 region. The trimmed ITS2 classifier should perform better, but the pretrained version below 
