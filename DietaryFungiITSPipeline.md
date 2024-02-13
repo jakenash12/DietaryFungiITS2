@@ -55,7 +55,7 @@ done
 
 module load biocontainers
 module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
+WD_path=/anvil/scratch/x-jnash12/DietaryFungi
 
 qiime tools import \
   --type 'SampleData[SequencesWithQuality]' \
@@ -82,7 +82,7 @@ qiime demux summarize \
 
 module load biocontainers
 module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
+WD_path=/anvil/scratch/x-jnash12/DietaryFungi
 
 qiime dada2 denoise-single \
 	--i-demultiplexed-seqs ${WD_path}/ITS2_demux.qza \
@@ -115,7 +115,7 @@ qiime feature-table summarize \
 
 module load biocontainers
 module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
+WD_path=/anvil/scratch/x-jnash12/DietaryFungi
 
 qiime vsearch cluster-features-de-novo \
 	--i-sequences ${WD_path}/ITS2_dada2seqs.qza\
