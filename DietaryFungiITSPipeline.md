@@ -136,6 +136,61 @@ qiime feature-table tabulate-seqs \
 	--i-data ${WD_path}/ITS2_Dada2_repseqs97.qza \
 	--o-visualization ${WD_path}/ITS2_Dada2_repseqs97.qzv
 ```
-https://github.com/colinbrislawn/unite-train/releases/download/v9.0-v25.07.2023-qiime2-2023.9/unite_ver9_dynamic_all_25.07.2023-Q2-2023.9.qza'
 
 ### Taxonomic Classification - Below uses a pre-trained taxonomic classifier for the UNITE database of full length ITS sequences. I am working on training my own classifier for the UNITE database that has been trimmed to only include the ITS2 region. The trimmed ITS2 classifier should perform better, but the pretrained version below 
+```
+#!/bin/bash
+#SBATCH -o slurm-%j-sklearn_classify.out
+#SBATCH -c 128
+#SBATCH --partition=shared 
+#SBATCH -A BIO230020
+#SBATCH --export=ALL
+#SBATCH -t 6:00:00
+
+module load biocontainers
+module load qiime2
+WD_path=/anvil/scratch/x-jnash12/DietaryFungi
+cd ${WD_path}
+
+wget https://github.com/colinbrislawn/unite-train/releases/download/v9.0-v25.07.2023-qiime2-2023.9/unite_ver9_dynamic_all_25.07.2023-Q2-2023.9.qza -O unite_ver9_dynamic_all_25.07.2023-Q2-2023.9.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier ${WD_path}/unite_ver9_dynamic_all_25.07.2023-Q2-2023.9.qza \
+  --i-reads ${WD_path}/ITS2_Dada2_repseqs97.qza \
+  --o-classification ${WD_path}/ITS2_Dada2_repseqs97_taxonomy_parallel.qza \
+  --p-n-jobs -1
+```
+
+### ExportData
+```
+#!/bin/bash
+#SBATCH -o slurm-%j-ExportQIIME.out
+#SBATCH -c 1
+#SBATCH --partition=shared 
+#SBATCH -A BIO230020
+#SBATCH --export=ALL
+#SBATCH -t 1:00:00
+
+module load biocontainers
+module load qiime2
+WD_path=/anvil/scratch/x-jnash12/DietaryFungi
+
+qiime tools extract \
+  --input-path ${WD_path}/ITS2_Dada2_repseqs97_taxonomy.qza \
+  --output-path ${WD_path}/ITS2_Dada2_repseqs97_taxonomy
+
+cp ${WD_path}/ITS2_Dada2_repseqs97_taxonomy/*/data/taxonomy.tsv ${WD_path}/ITS2_Dada2_repseqs97_taxonomy.tsv
+
+qiime tools export \
+  --input-path ${WD_path}/ITS2_Dada2_table97.qza \
+  --output-path ${WD_path}/QIIME_exported_files
+
+biom convert -i ${WD_path}/QIIME_exported_files/feature-table.biom -o ${WD_path}/QIIME_16S_files/ITS2_OTUTable_97.tsv --to-tsv
+
+qiime tools export \
+  --input-path ${WD_path}/ITS2_Dada2_repseqs97.qza \
+  --output-path ${WD_path}/QIIME_exported_files
+
+mv ${WD_path}/QIIME_exported_files/dna-sequences.fasta ${WD_path}/QIIME_exported_files/ITS2_Dada2_repseqs97.fasta
+
+```
