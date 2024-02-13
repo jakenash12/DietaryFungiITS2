@@ -10,7 +10,7 @@ cd ${WD_path}
 ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep -v "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
 ```
 
-### Uses PEAR to merge paired reads, then renames files
+### Uses PEAR to merge paired reads
 ```
 mkdir ${WD_path}/PEARReads/ && cd ${WD_path}/PEARReads/
 for i in $(cat ${WD_path}/filelist)
@@ -18,12 +18,7 @@ do
 sbatch -o slurm-%j-PEAR.out --partition=shared --account=BIO230020 --export=ALL -t 2:00:00 -c 1 --wrap="pear \
 	-f /anvil/scratch/x-jnash12/Nash_8872_24011001/${i}_R1_001.fastq.gz \
 	-r /anvil/scratch/x-jnash12/Nash_8872_24011001/${i}_R2_001.fastq.gz \
-	-o ${WD_path}/PEARReads/${i}_PEAR.fastq.gz"
-done
-
-for i in $(cat ${WD_path}/filelist)
-do
-mv ${WD_path}/PEARReads/${i}_PEAR.fastq.gz.assembled.fastq ${WD_path}/PEARReads/${i}.assembled.fastq
+	-o ${WD_path}/PEARReads/${i}"
 done
 ```
 
