@@ -38,23 +38,8 @@ done
 printf "%s\t%s\n" "sample-id" "absolute-filepath" > ${WD_path}/QIIMEManifest.tsv
 for i in $(cat ${WD_path}/filelist)
 do
-if [[ "$i" == *"HSP"* ]]; then
-Expt="HSP"
-elif [[ "$i" == *"Inoc"* ]]; then
-Expt="INOC"
-elif [[ "$i" == *"Neg"* ]]; then
-Expt="NEG"
-elif [[ "$i" == *"ASC"* ]]; then
-if [[ "$i" == *"Soil"* ]]; then
-Expt="ASCSoil"
-else
-Expt="ASCRoot"
-fi
-else
-Expt="OhNOOOOO"
-fi
-SampleNum=$(echo "$i" | grep -oE '[0-9]+' | head -n1)
-printf "%s\t%s\n" "${Expt}_${SampleNum}" "${WD_path}/ITSxpressReads/${i}.ITS.fastq.gz" >> ${WD_path}/QIIMEManifest.tsv
+SampleID=$(echo "$i" | grep -oP 'Mengyi.')
+printf "%s\t%s\n" "${SampleID}" "${WD_path}/ITSxpressReads/${i}.ITS.fastq.gz" >> ${WD_path}/QIIMEManifest.tsv
 done
 ```
 
