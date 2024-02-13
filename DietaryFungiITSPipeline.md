@@ -69,7 +69,6 @@ qiime demux summarize \
 
  ```
 
-
 ### Uses Dada2 to denoise, quality filter, chimera filter, and ASV call. Submit this as a batch script titled Dada2SE
 ```
 #!/bin/bash
@@ -100,6 +99,10 @@ qiime metadata tabulate \
 qiime feature-table summarize \
 	--i-table ${WD_path}/ITS2_dada2table.qza \
 	--o-visualization ${WD_path}/ITS2_dada2table.qzv
+
+qiime feature-table tabulate-seqs \
+	--i-data ${WD_path}/ITS2_dada2seqs.qza \
+	--o-visualization ${WD_path}/ITS2_dada2seqs.qzv
 ```
 
 
@@ -111,7 +114,7 @@ qiime feature-table summarize \
 #SBATCH --partition=shared 
 #SBATCH -A BIO230020
 #SBATCH --export=ALL
-#SBATCH -t 48:00:00
+#SBATCH -t 6:00:00
 
 module load biocontainers
 module load qiime2
