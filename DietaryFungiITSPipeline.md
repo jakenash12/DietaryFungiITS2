@@ -1,16 +1,16 @@
-### setup of working directory - change this path to match your file system
+### Setup of working directory - change this path to match your file system
 ```
 WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
 mkdir ${WD_path}
 cd ${WD_path}
 ```
 
-### generates filelist to loop through, omitting Mengyi's samples which were also on this run
+### Fenerates filelist to loop through, omitting Mengyi's samples which were also on this run
 ```
 ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep -v "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
 ```
 
-### uses PEAR to merge paired reads, then renames files
+### Uses PEAR to merge paired reads, then renames files
 ```
 mkdir ${WD_path}/PEARReads/ && cd ${WD_path}/PEARReads/
 for i in $(cat ${WD_path}/filelist)
@@ -27,7 +27,7 @@ mv ${WD_path}/PEARReads/${i}_PEAR.fastq.gz.assembled.fastq ${WD_path}/PEARReads/
 done
 ```
 
-### uses ITSxpress to extract ITS2 region from merged reads
+### Uses ITSxpress to extract ITS2 region from merged reads
 ```
 conda activate ITSxpress
 mkdir ${WD_path}/ITSxpressReads/ && cd ${WD_path}/ITSxpressReads/
@@ -38,7 +38,7 @@ sbatch -o slurm-%j-ITSxpress.out --partition=shared --account=BIO230020 --export
 done
 ```
 
-### prepares QIIME2 manifest
+### Prepares QIIME2 manifest
 ```
 printf "%s\t%s\n" "sample-id" "absolute-filepath" > ${WD_path}/QIIMEManifest.tsv
 for i in $(cat ${WD_path}/filelist)
