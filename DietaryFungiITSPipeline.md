@@ -5,10 +5,13 @@ mkdir ${WD_path}
 cd ${WD_path}
 ```
 
-#generates filelist to loop through, omitting Mengyi's samples which were also on this run
+### generates filelist to loop through, omitting Mengyi's samples which were also on this run
+```
 ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep -v "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
+```
 
-#uses PEAR to merge paired reads
+### uses PEAR to merge paired reads, then renames files
+```
 mkdir ${WD_path}/PEARReads/ && cd ${WD_path}/PEARReads/
 for i in $(cat ${WD_path}/filelist)
 do
@@ -18,13 +21,14 @@ sbatch -o slurm-%j-PEAR.out --partition=shared --account=BIO230020 --export=ALL 
 	-o ${WD_path}/PEARReads/${i}_PEAR.fastq.gz"
 done
 
-
 for i in $(cat ${WD_path}/filelist)
 do
 mv ${WD_path}/PEARReads/${i}_PEAR.fastq.gz.assembled.fastq ${WD_path}/PEARReads/${i}.assembled.fastq
 done
+```
 
-#uses ITSxpress to extract ITS2 region from merged reads
+### uses ITSxpress to extract ITS2 region from merged reads
+```
 conda activate ITSxpress
 mkdir ${WD_path}/ITSxpressReads/ && cd ${WD_path}/ITSxpressReads/
 for i in $(cat ${WD_path}/filelist)
@@ -32,8 +36,10 @@ do
 sbatch -o slurm-%j-ITSxpress.out --partition=shared --account=BIO230020 --export=ALL -t 24:00:00 -c 128 --wrap="itsxpress --fastq ${WD_path}/PEARReads/${i}.assembled.fastq --single_end --region ITS2 --taxa Fungi \
 --log ${WD_path}/ITSxpressReads/${i}.logfile.txt --outfile ${WD_path}/ITSxpressReads/${i}.ITS.fastq.gz --threads 128"
 done
+```
 
-#prepares QIIME2 manifest
+### prepares QIIME2 manifest
+```
 printf "%s\t%s\n" "sample-id" "absolute-filepath" > ${WD_path}/QIIMEManifest.tsv
 for i in $(cat ${WD_path}/filelist)
 do
@@ -55,8 +61,10 @@ fi
 SampleNum=$(echo "$i" | grep -oE '[0-9]+' | head -n1)
 printf "%s\t%s\n" "${Expt}_${SampleNum}" "${WD_path}/ITSxpressReads/${i}.ITS.fastq.gz" >> ${WD_path}/QIIMEManifest.tsv
 done
+```
 
-################################DataImport################################################
+### Imports data into QIIME2. Submit this as a batch script titled DataImport
+```
 #!/bin/bash
 #SBATCH -o slurm-%j-QIIME_Import.out
 #SBATCH -c 1
@@ -79,9 +87,11 @@ qiime demux summarize \
   --i-data ${WD_path}/ITS2_demux.qza \
   --o-visualization ${WD_path}/ITS2_demux.qzv
 
-################################################################################################
+ ```
 
-################################Dada2SE###################################################
+
+### Uses Dada2 to denoise, quality filter, chimera filter, and ASV call. Submit this as a batch script titled Dada2SE
+```
 #!/bin/bash
 #SBATCH -o slurm-%j-dada2.out
 #SBATCH -c 128
@@ -110,10 +120,11 @@ qiime metadata tabulate \
 qiime feature-table summarize \
 	--i-table ${WD_path}/ITS2_dada2table.qza \
 	--o-visualization ${WD_path}/ITS2_dada2table.qzv
+```
 
-################################################################################################
 
-################################ClusterDada2#####################################################
+### OPTIONAL: The Dada2 ASVs can be used as-is, or you can run Vsearch clustering to generate 97% OTUs. Submit this as a batch script titled ClusterDada2
+```
 #!/bin/bash
 #SBATCH -o slurm-%j-vsearch_cluster.out
 #SBATCH -c 128
@@ -141,133 +152,4 @@ qiime feature-table summarize \
 qiime feature-table tabulate-seqs \
 	--i-data ${WD_path}/ITS2_Dada2_repseqs97.qza \
 	--o-visualization ${WD_path}/ITS2_Dada2_repseqs97.qzv
-
-################################################################################################
-
-################################Dereplicate#####################################################
-#!/bin/bash
-#SBATCH -o slurm-%j-vsearch_dereplicate.out
-#SBATCH -c 1
-#SBATCH --partition=shared 
-#SBATCH -A BIO230020
-#SBATCH --export=ALL
-#SBATCH -t 48:00:00
-#SBATCH --mem=128G
-
-module load biocontainers
-module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
-
-qiime vsearch dereplicate-sequences \
-	--i-sequences ${WD_path}/ITS2_demux.qza \
-	--o-dereplicated-table ${WD_path}/ITS2_dereptable.qza \
-	--o-dereplicated-sequences ${WD_path}/ITS2_demux_derep.qza
-
-################################################################################################
-
-################################Cluster#####################################################
-#!/bin/bash
-#SBATCH -o slurm-%j-vsearch_cluster.out
-#SBATCH -c 128
-#SBATCH --partition=shared 
-#SBATCH -A BIO230020
-#SBATCH --export=ALL
-#SBATCH -t 48:00:00
-
-module load biocontainers
-module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
-
-qiime vsearch cluster-features-de-novo \
-	--i-sequences ${WD_path}/ITS2_demux_derep.qza \
-	--i-table ${WD_path}/ITS2_dereptable.qza \
-	--p-perc-identity 0.97 \
-	--p-threads 0 \
-	--o-clustered-table ${WD_path}/ITS2_table_97.qza \
-	--o-clustered-sequences ${WD_path}/ITS2_repseqs_97.qza
-
-################################################################################################
-
-################################TableSummarize#####################################################
-#!/bin/bash
-#SBATCH -o slurm-%j-TableSumm.out
-#SBATCH -c 64
-#SBATCH --partition=shared 
-#SBATCH -A BIO230020
-#SBATCH --export=ALL
-#SBATCH -t 1:00:00
-
-module load biocontainers
-module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
-
-qiime feature-table summarize \
-	--i-table ${WD_path}/ITS2_dereptable.qza \
-	--o-visualization ${WD_path}/ITS2_dereptable.qzv
-
-qiime feature-table summarize \
-	--i-table ${WD_path}/ITS2_table_97.qza \
-	--o-visualization ${WD_path}/ITS2_table_97.qzv
-
-################################################################################################
-
-################################RepSeqSumm#####################################################
-#!/bin/bash
-#SBATCH -o slurm-%j-RepSeqSumm.out
-#SBATCH -c 64
-#SBATCH --partition=shared 
-#SBATCH -A BIO230020
-#SBATCH --export=ALL
-#SBATCH -t 1:00:00
-
-module load biocontainers
-module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
-
-qiime feature-table tabulate-seqs \
-	--i-data ${WD_path}/ITS2_repseqs_97_nonchimeric.qza \
-	--o-visualization ${WD_path}/ITS2_repseqs_97_nonchimeric.qzv
-
-################################################################################################
-
-################################ChimeraCheck###################################################
-#!/bin/bash
-#SBATCH -o slurm-%j-chimera_check.out
-#SBATCH -c 128
-#SBATCH --partition=shared 
-#SBATCH -A BIO230020
-#SBATCH --export=ALL
-#SBATCH -t 48:00:00
-
-module load biocontainers
-module load qiime2
-WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
-
-qiime vsearch uchime-denovo \
-	--i-sequences ${WD_path}/ITS2_repseqs_97.qza \
-	--i-table ${WD_path}/ITS2_table_97.qza \
-	--o-chimeras ${WD_path}/ITS2_repseqs_97_chimeric.qza \
-	--o-nonchimeras ${WD_path}/ITS2_repseqs_97_nonchimeric.qza \
-	--o-stats ${WD_path}/ITS2_repseqs_97_chimera_stats.qza
-
-################################################################################################
-
-#########################Training UNITE Classifier##############################################
-mkdir ${WD_path}/UNITE_classifier && cd ${WD_path}/UNITE_classifier
-
-#unzips UNITE file which had been downloaded to desktop and manually uploaded to cluster via OnDemand
-tar -xvzf 1CC2477429B3A703CC1C7A896A7EFF457BB0D471877CB8D18074959DBB630D10.tgz
-
-#removes lowercase characters and spaces at end of line from UNITE fasta
-awk '/^>/ {print($0)}; /^[^>]/ {print(toupper($0))}' sh_refs_qiime_ver9_dynamic_all_25.07.2023.fasta | tr -d ' ' > sh_refs_qiime_ver9_dynamic_all_25.07.2023_uppercase.fasta
-
-#uses ITSxpress to extract ITS2 region
-#first converts fasta file to fastq with dummy quality scores because ITSxpress only accepts fastq
-conda deactivate
-sbatch -o slurm-%j-fastqconvert.out --partition=shared --account=BIO230020 --export=ALL -t 1:00:00 -c 1 --wrap="reformat.sh in=${WD_path}/UNITE_classifier/sh_refs_qiime_ver9_dynamic_all_25.07.2023_uppercase.fasta out=${WD_path}/UNITE_classifier/sh_refs_qiime_ver9_dynamic_all_25.07.2023_uppercase.fastq qfake=35"
-
-conda activate ITSxpress
-sbatch -o slurm-%j-ITSxpress.out --partition=shared --account=BIO230020 --export=ALL -t 72:00:00 -c 128 --wrap="itsxpress --fastq ${WD_path}/UNITE_classifier/sh_refs_qiime_ver9_dynamic_all_25.07.2023_uppercase.fastq --single_end --region ITS2 --taxa All \
---log ${WD_path}/UNITE_classifier/UNITE_ITSxpress.logfile.txt --outfile ${WD_path}/UNITE_classifier/sh_refs_qiime_ver9_dynamic_all_25.07.2023_uppercase_ITS2.fastq --threads 128"
-
-
+```
