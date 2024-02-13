@@ -1,6 +1,9 @@
+### setup of working directory - change this path to match your file system
+```
 WD_path=/anvil/scratch/x-jnash12/ASC_PSC_ITS
 mkdir ${WD_path}
 cd ${WD_path}
+```
 
 #generates filelist to loop through, omitting Mengyi's samples which were also on this run
 ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep -v "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
