@@ -5,7 +5,7 @@ mkdir ${WD_path}
 cd ${WD_path}
 ```
 
-### Generates filelist to loop through, omitting Mengyi's samples which were also on this run
+### Generates filelist to loop through, including only Mengyi's samples which were also on this run
 ```
 ls /anvil/scratch/x-jnash12/Nash_8872_24011001 | grep "R1_001.fastq.gz" | grep "Mengyi" | sed 's/_R1_001.fastq.gz//g' > ${WD_path}/filelist
 ```
