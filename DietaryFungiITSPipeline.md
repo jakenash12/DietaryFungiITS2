@@ -179,13 +179,13 @@ qiime tools extract \
   --input-path ${WD_path}/ITS2_Dada2_repseqs97_taxonomy.qza \
   --output-path ${WD_path}/ITS2_Dada2_repseqs97_taxonomy
 
-cp ${WD_path}/ITS2_Dada2_repseqs97_taxonomy/*/data/taxonomy.tsv ${WD_path}/ITS2_Dada2_repseqs97_taxonomy.tsv
-
 qiime tools export \
   --input-path ${WD_path}/ITS2_Dada2_table97.qza \
   --output-path ${WD_path}/QIIME_exported_files
 
-biom convert -i ${WD_path}/QIIME_exported_files/feature-table.biom -o ${WD_path}/QIIME_16S_files/ITS2_OTUTable_97.tsv --to-tsv
+biom convert -i ${WD_path}/QIIME_exported_files/feature-table.biom -o ${WD_path}/QIIME_exported_files/ITS2_OTUTable_97.tsv --to-tsv
+
+cp ${WD_path}/ITS2_Dada2_repseqs97_taxonomy/*/data/taxonomy.tsv ${WD_path}/QIIME_exported_files/ITS2_Dada2_repseqs97_taxonomy.tsv
 
 qiime tools export \
   --input-path ${WD_path}/ITS2_Dada2_repseqs97.qza \
