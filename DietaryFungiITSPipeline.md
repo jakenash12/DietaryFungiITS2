@@ -157,7 +157,7 @@ wget https://github.com/colinbrislawn/unite-train/releases/download/v9.0-v25.07.
 qiime feature-classifier classify-sklearn \
   --i-classifier ${WD_path}/unite_ver9_dynamic_all_25.07.2023-Q2-2023.9.qza \
   --i-reads ${WD_path}/ITS2_Dada2_repseqs97.qza \
-  --o-classification ${WD_path}/ITS2_Dada2_repseqs97_taxonomy_parallel.qza \
+  --o-classification ${WD_path}/ITS2_Dada2_repseqs97_taxonomy.qza \
   --p-n-jobs -1
 ```
 
